@@ -77,7 +77,7 @@ def send_telegram_message(message):
             pass
 
 def get_deriv_data(symbol, count=200):
-    url = "url = "https://api.deriv.com/api/v2/ticks_history""
+    url = "https://api.deriv.com/api/v2/ticks_history""
     params = {"ticks_history": symbol, "count": count, "end": "latest", "style": "candles", "granularity": 60}
     r = requests.get(url, params=params)
     data = r.json().get("candles", [])
