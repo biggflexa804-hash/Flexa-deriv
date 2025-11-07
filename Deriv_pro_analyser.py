@@ -112,7 +112,7 @@ def get_deriv_data(symbol="R_100", count=50):
 API_TOKEN = "DERIV_API_TOKEN"
 
 # Base URL for Deriv API
-BASE
+BASE_URL
 
 def calculate_indicators(df):
     df["EMA_10"] = ta.trend.ema_indicator(df["close"], 10)
