@@ -76,17 +76,50 @@ def send_telegram_message(message):
         except:
             pass
 
-def get_deriv_data(symbol, count=200):
-    url = "https://api.deriv.com/api/v2/ticks_history"
-    params = {"ticks_history": symbol, "count": count, "end": "latest", "style": "candles", "granularity": 60}
-    r = requests.get(url, params=params)
-    data = r.json().get("candles", [])
-    if not data:
-        return pd.DataFrame()
-    df = pd.DataFrame(data)
-    df["epoch"] = pd.to_datetime(df["epoch"], unit="s")
-    df.rename(columns={"epoch": "time"}, inplace=True)
-    return df
+def import requests
+import streamlit as st
+
+# Your API token from Deriv (replace this with your own)
+API_TOKEN = "RsY3PobhgPpSp2r"
+
+# Base URL for Deriv API
+BASE_URL = "https://api.deriv.com/api/v2"
+
+def get_deriv_data(symbol="R_100", count=50):
+    """
+    Fetches candle data from Deriv API for a given symbol.
+    """
+    headers = {"Authorization": f"Bearer {API_TOKEN}"}
+    params = {
+        "ticks_history": symbol,
+        "style": "candles",
+        "granularity": 60,  # 1-minute candles
+        "count": count,
+        "end": "latest"
+    }
+
+    try:
+        r = requests.get(f"{BASE_URL}/ticks_history", headers=headers, params=params)
+        if r.status_code != 200:
+            st.error(f"HTTP Error {r.status_code}: {r.text}")
+            return []
+
+        data = r.json()
+
+        # Check if 'candles' exist in response
+        candles = data.get("candles")
+        if not candles:
+            st.warning("No candle data returned. Check symbol or token permissions.")
+            return []
+
+        return candles
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"Network error: {e}")
+        return []
+    except ValueError:
+        st.error("Error decoding JSON from Deriv API.")
+        return []
 
 def calculate_indicators(df):
     df["EMA_10"] = ta.trend.ema_indicator(df["close"], 10)
