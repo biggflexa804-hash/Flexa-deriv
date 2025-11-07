@@ -1,0 +1,52 @@
+import streamlit as st
+import pandas as pd
+import websocket
+import json
+import threading
+import time
+
+st.set_page_config(page_title="💹 Flexa Deriv Live Trading Analyser", layout="wide")
+
+st.title("💹 Flexa Deriv Live Trading Analyser")
+st.caption("Real-time analysis for Deriv synthetic indices — with dark mode and Telegram alerts")
+
+symbol = st.selectbox("Choose symbol:", [
+    "R_10", "R_25", "R_50", "R_75", "R_100",
+    "RDBEAR", "RDBULL", "1HZ10V", "1HZ25V", "1HZ50V", "1HZ75V", "1HZ100V"
+])
+
+# Real-time tick storage
+data = []
+
+def on_message(ws, message):
+    global data
+    msg = json.loads(message)
+    if "tick" in msg:
+        tick = msg["tick"]
+        data.append({
+            "time": pd.to_datetime(tick["epoch"], unit="s"),
+            "price": tick["quote"]
+        })
+        # Keep only latest 200 points
+        if len(data) > 200:
+            data = data[-200:]
+
+def run_websocket():
+    ws = websocket.WebSocketApp(
+        "wss://ws.derivws.com/websockets/v3?app_id=1089",
+        on_message=on_message
+    )
+    ws.on_open = lambda ws: ws.send(json.dumps({"ticks": symbol}))
+    ws.run_forever()
+
+# Run websocket in background
+threading.Thread(target=run_websocket, daemon=True).start()
+
+# Streamlit live updating
+placeholder = st.empty()
+
+while True:
+    if len(data) > 1:
+        df = pd.DataFrame(data)
+        placeholder.line_chart(df.set_index("time")["price"])
+    time.sleep(1)
