@@ -76,7 +76,7 @@ def send_telegram_message(message):
         except:
             pass
 
-def import requests
+
 import streamlit as st
 import os
 
